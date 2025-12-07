@@ -1,0 +1,219 @@
+/* Estilos para o Sistema de Cadastro - Dayane Diniz */
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f8f9fa;
+  color: #222;
+}
+
+.navbar {
+  background: rgba(223, 185, 19, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #222;
+  padding: 15px 20px;
+  position: relative;
+  z-index: 999;
+  border-bottom: 1px solid rgba(223, 185, 19, 0.2);
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  font-size: 1.5em;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  color: #222;
+}
+
+.subtitle {
+  font-size: 1.1em;
+  display: block;
+  font-weight: 600;
+  color: #222;
+  margin-top: 5px;
+  letter-spacing: 0.5px;
+}
+
+.navbar-brand {
+  color: #222;
+  text-decoration: none;
+}
+
+.navbar-brand:hover {
+  color: #222;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-outline-light {
+  border-color: rgba(0, 0, 0, 0.5);
+  color: #222;
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(223, 185, 19, 0.3);
+  color: #222;
+  border-color: rgba(0, 0, 0, 0.5);
+}
+
+.btn-outline-light.active {
+  background-color: rgba(223, 185, 19, 0.4);
+  color: #222;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: rgba(223, 185, 19, 0.1);
+  border-bottom: 1px solid rgba(223, 185, 19, 0.2);
+  padding: 15px 20px;
+}
+
+.card-title {
+  color: #333;
+  font-weight: 600;
+}
+
+.form-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.btn-primary {
+  background-color: #dfb913;
+  border-color: #dfb913;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #c9a711;
+  border-color: #c9a711;
+}
+
+.table th {
+  background-color: rgba(223, 185, 19, 0.1);
+  color: #555;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  font-weight: 500;
+}
+
+.status-pago {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.status-pendente {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.cliente-pendente {
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.action-buttons .btn {
+  padding: 2px 5px;
+  font-size: 0.8em;
+}
+
+footer {
+  background: rgba(223, 185, 19, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  text-align: center;
+  padding: 20px 10px;
+  border-top: 1px solid rgba(223, 185, 19, 0.2);
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.1);
+}
+
+footer p {
+  color: #222;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 0;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .nav-buttons {
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .navbar-brand {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  .navbar .container {
+    flex-direction: column;
+  }
+}
+
+/* Estatísticas */
+.stat-card {
+  text-align: center;
+  padding: 20px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-value {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: #dfb913;
+  margin: 10px 0;
+}
+
+.stat-label {
+  color: #555;
+  font-weight: 500;
+}
+
+.chart-container {
+  height: 300px;
+  margin-top: 20px;
+}
+
+/* Estilos para os novos filtros */
+.card-header .card-title {
+  margin-bottom: 0;
+}
+
+.form-select {
+  border-color: #ced4da;
+}
+
+.form-select:focus {
+  border-color: #dfb913;
+  box-shadow: 0 0 0 0.25rem rgba(223, 185, 19, 0.25);
+}
+
+
