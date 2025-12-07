@@ -320,39 +320,23 @@ function mostrarHistorico(clienteId, clienteNome) {
 
   if (identificador) {
     // Buscar todos os atendimentos com o mesmo CPF ou email
-    atendimentos = clientes.filter(
-      (c) =>
-        (cliente.cpf && c.cpf === cliente.cpf) ||
-        (cliente.email && c.email === cliente.email)
-    );
+    atendimentos = clientes.filter((c) => {
+      const cpfMatch = c.cpf && c.cpf === cliente.cpf && cliente.cpf;
+      const emailMatch = c.email && c.email === cliente.email && cliente.email;
+      return cpfMatch || emailMatch;
+    });
   } else {
-    // Apenas o registro atual
+    // Se não tiver identificador, mostrar apenas este cliente
     atendimentos = [cliente];
   }
 
   // Ordenar por data (mais recente primeiro)
   atendimentos.sort((a, b) => new Date(b.data) - new Date(a.data));
 
-  // Mostrar nome do cliente
-  document.getElementById("historicoClienteNome").textContent = `Cliente: ${clienteNome}`;
-
-  // Verificar se há histórico
-  if (atendimentos.length === 0) {
-    document.getElementById("semHistorico").style.display = "block";
-    abrirModal("historicoModal");
-    return;
-  }
-
-  document.getElementById("semHistorico").style.display = "none";
-
-  // Adicionar atendimentos à tabela
+  // Adicionar à tabela
   atendimentos.forEach((atendimento) => {
     const tr = document.createElement("tr");
-
-    // Formatar data
     const dataFormatada = formatarData(atendimento.data);
-
-    // Formatar valor
     const valorFormatado = formatarMoeda(atendimento.valor);
 
     tr.innerHTML = `
@@ -364,6 +348,7 @@ function mostrarHistorico(clienteId, clienteNome) {
                     ${atendimento.pago ? "Pago" : "Pendente"}
                 </span>
             </td>
+            <td>${atendimento.observacoes || "-"}</td>
         `;
 
     historicoTableBody.appendChild(tr);
@@ -373,141 +358,85 @@ function mostrarHistorico(clienteId, clienteNome) {
   abrirModal("historicoModal");
 }
 
-function gerarRelatorio() {
-  // Verificar se há clientes
-  if (clientes.length === 0) {
-    mostrarAlerta("Não há clientes para gerar relatório!", "warning");
+// Funções de Backup e Restauração
+function fazerBackup() {
+  const backup = {
+    data: new Date().toISOString(),
+    clientes: clientes,
+  };
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `backup-dayane-${new Date().toISOString().split("T")[0]}.json`;
+  link.click();
+
+  mostrarAlerta("Backup realizado com sucesso!", "success");
+}
+
+function abrirModalRestauracao() {
+  abrirModal("restoreModal");
+}
+
+function restaurarDados() {
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    mostrarAlerta("Selecione um arquivo de backup!", "warning");
     return;
   }
 
-  // Perguntar qual formato
-  confirmCallback = gerarRelatorioPDF;
-  document.getElementById("confirmMessage").textContent = "Escolha o formato do relatório:";
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const backup = JSON.parse(e.target.result);
 
-  // Personalizar botões do modal
-  const btnConfirm = document.getElementById("btnConfirm");
-  btnConfirm.textContent = "PDF";
-  btnConfirm.className = "btn btn-primary";
+      if (!backup.clientes || !Array.isArray(backup.clientes)) {
+        mostrarAlerta("Arquivo de backup inválido!", "danger");
+        return;
+      }
 
-  const btnCancel = btnConfirm.previousElementSibling;
-  btnCancel.textContent = "CSV";
-  btnCancel.className = "btn btn-success";
-  btnCancel.onclick = () => {
-    gerarRelatorioCSV();
-    fecharModal("confirmModal");
+      clientes = backup.clientes;
+      salvarNoLocalStorage();
+      atualizarTabela();
+
+      fecharModal("restoreModal");
+      mostrarAlerta("Dados restaurados com sucesso!", "success");
+    } catch (error) {
+      mostrarAlerta("Erro ao restaurar dados: " + error.message, "danger");
+    }
   };
 
-  abrirModal("confirmModal");
+  reader.readAsText(file);
 }
 
-function gerarRelatorioPDF() {
-  // Usar jsPDF para gerar PDF
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  // Título
-  doc.setFontSize(18);
-  doc.text("Relatório de Clientes - Dayane Diniz", 14, 20);
-
-  // Data do relatório
-  doc.setFontSize(10);
-  doc.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")}`, 14, 30);
-
-  // Preparar dados para a tabela
-  const dadosTabela = [];
-
+// Função para gerar relatório CSV
+function gerarRelatorio() {
   // Cabeçalho
-  const cabecalho = ["Nome", "Serviço", "Data", "Valor", "Status"];
+  let csv =
+    "Nome,CPF,Email,Serviço,Data,Valor,Status,Observações\n";
 
-  // Ordenar por status (pendentes primeiro) e depois por data
+  // Ordenar clientes por data (mais recentes primeiro)
   const clientesOrdenados = [...clientes].sort((a, b) => {
-    if (a.pago !== b.pago) {
-      return a.pago ? 1 : -1; // Pendentes primeiro
-    }
-    return new Date(b.data) - new Date(a.data); // Mais recentes primeiro
-  });
-
-  // Adicionar dados
-  clientesOrdenados.forEach((cliente) => {
-    dadosTabela.push([
-      cliente.nome,
-      cliente.servico,
-      formatarData(cliente.data),
-      formatarMoeda(cliente.valor),
-      cliente.pago ? "Pago" : "Pendente",
-    ]);
-  });
-
-  // Criar tabela
-  doc.autoTable({
-    head: [cabecalho],
-    body: dadosTabela,
-    startY: 40,
-    styles: {
-      fontSize: 9,
-    },
-    columnStyles: {
-      4: { // Coluna de status
-        cellCallback: function (cell, data) {
-          if (data.raw[4] === "Pendente") {
-            cell.styles.fillColor = [255, 200, 200];
-            cell.styles.textColor = [180, 0, 0];
-          }
-        },
-      },
-    },
-  });
-
-  // Resumo
-  const totalClientes = clientes.length;
-  const clientesPagos = clientes.filter((c) => c.pago).length;
-  const clientesPendentes = totalClientes - clientesPagos;
-  const valorTotal = clientes.reduce(
-    (total, cliente) => total + (cliente.valor || 0),
-    0
-  );
-  const valorPendente = clientes
-    .filter((c) => !c.pago)
-    .reduce((total, cliente) => total + (cliente.valor || 0), 0);
-
-  const finalY = doc.lastAutoTable.finalY + 10;
-
-  doc.setFontSize(12);
-  doc.text("Resumo:", 14, finalY);
-  doc.setFontSize(10);
-  doc.text(`Total de clientes: ${totalClientes}`, 14, finalY + 7);
-  doc.text(`Pagamentos realizados: ${clientesPagos}`, 14, finalY + 14);
-  doc.text(`Pagamentos pendentes: ${clientesPendentes}`, 14, finalY + 21);
-  doc.text(`Valor total: ${formatarMoeda(valorTotal)}`, 14, finalY + 28);
-  doc.text(`Valor pendente: ${formatarMoeda(valorPendente)}`, 14, finalY + 35);
-
-  // Salvar PDF
-  doc.save("relatorio-clientes-dayane.pdf");
-}
-
-function gerarRelatorioCSV() {
-  // Cabeçalho
-  let csv = "Nome,CPF,Email,Serviço,Data,Valor,Status,Observações\n";
-
-  // Ordenar por status (pendentes primeiro) e depois por data
-  const clientesOrdenados = [...clientes].sort((a, b) => {
-    if (a.pago !== b.pago) {
-      return a.pago ? 1 : -1; // Pendentes primeiro
-    }
+    if (!a.data || !b.data) return 0;
     return new Date(b.data) - new Date(a.data); // Mais recentes primeiro
   });
 
   // Adicionar dados
   clientesOrdenados.forEach((cliente) => {
     // Escapar campos com vírgulas
-    const nome = `"${cliente.nome.replace(/"/g, """")}"`;
-    const cpf = `"${cliente.cpf ? cliente.cpf.replace(/"/g, """") : ""}"`;
-    const email = `"${cliente.email ? cliente.email.replace(/"/g, """") : ""}"`;
-    const servico = `"${cliente.servico.replace(/"/g, """")}"`;
-    const data = `"${formatarData(cliente.data).replace(/"/g, """")}"`;
-    const valor = `"${formatarMoeda(cliente.valor).replace(/"/g, """")}"`;
+    const nome = `"${cliente.nome.replace(/"/g, '"')}"`;
+    const cpf = `"${cliente.cpf ? cliente.cpf.replace(/"/g, '"') : ""}"`;
+    const email = `"${cliente.email ? cliente.email.replace(/"/g, '"') : ""}"`;
+    const servico = `"${cliente.servico.replace(/"/g, '"')}"`;
+    const data = `"${formatarData(cliente.data).replace(/"/g, '"')}"`;
+    const valor = `"${formatarMoeda(cliente.valor).replace(/"/g, '"')}"`;
     const status = `"${cliente.pago ? "Pago" : "Pendente"}"`;
-    const observacoes = `"${cliente.observacoes ? cliente.observacoes.replace(/"/g, """") : ""}"`;
+    const observacoes = `"${cliente.observacoes ? cliente.observacoes.replace(/"/g, '"') : ""}"`;
 
     csv += `${nome},${cpf},${email},${servico},${data},${valor},${status},${observacoes}\n`;
   });
@@ -573,5 +502,3 @@ function mostrarAlerta(mensagem, tipo) {
     setTimeout(() => alerta.remove(), 300);
   }, 5000);
 }
-
-
